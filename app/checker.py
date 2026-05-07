@@ -50,7 +50,7 @@ def check_arm_shapes():
             "success": False,
             "error": str(e)
         }
-    
+
 
 def check_arm_capacity():
     try:
@@ -63,7 +63,7 @@ def check_arm_capacity():
             display_name="capacity-check-test",
             shape_config=oci.core.models.LaunchInstanceShapeConfigDetails(
                 ocpus=1,
-                memory_in_gbs=6
+                memory_in_gbs=1
             ),
             create_vnic_details=oci.core.models.CreateVnicDetails(
                 subnet_id=OCI_CONFIG["subnet_id"],
@@ -75,7 +75,6 @@ def check_arm_capacity():
             )
         )
 
-        # Intentionally trigger validation
         compute_client.launch_instance(launch_details)
 
         return {
@@ -88,10 +87,93 @@ def check_arm_capacity():
         if "Out of host capacity" in error_text:
             return {
                 "available": False,
-                "reason": "Out of capacity"
+                "reason": "OUT_OF_CAPACITY"
+            }
+
+        if "TooManyRequests" in error_text:
+            return {
+                "available": False,
+                "reason": "RATE_LIMITED"
+            }
+
+        if "NameResolutionError" in error_text:
+            return {
+                "available": False,
+                "reason": "NETWORK_ERROR"
             }
 
         return {
             "available": False,
-            "reason": error_text
+            "reason": "UNKNOWN_ERROR",
+            "error": error_text
+        }
+
+
+def load_ssh_public_key():
+    with open(OCI_CONFIG["ssh_public_key_path"], "r") as f:
+        return f.read()
+
+
+def auto_create_arm_instance():
+    try:
+        compute_client = oci.core.ComputeClient(OCI_CONFIG)
+
+        ssh_key = load_ssh_public_key()
+
+        launch_details = oci.core.models.LaunchInstanceDetails(
+            compartment_id=OCI_CONFIG["compartment_id"],
+            availability_domain=OCI_CONFIG["availability_domain"],
+            shape="VM.Standard.A1.Flex",
+            display_name=OCI_CONFIG["instance_name"],
+            shape_config=oci.core.models.LaunchInstanceShapeConfigDetails(
+                ocpus=1,
+                memory_in_gbs=1
+            ),
+            create_vnic_details=oci.core.models.CreateVnicDetails(
+                subnet_id=OCI_CONFIG["subnet_id"],
+                assign_public_ip=True
+            ),
+            source_details=oci.core.models.InstanceSourceViaImageDetails(
+                source_type="image",
+                image_id=OCI_CONFIG["image_id"]
+            ),
+            metadata={
+                "ssh_authorized_keys": ssh_key
+            }
+        )
+
+        response = compute_client.launch_instance(launch_details)
+
+        return {
+            "created": True,
+            "instance_id": response.data.id,
+            "display_name": response.data.display_name,
+            "state": response.data.lifecycle_state
+        }
+
+    except Exception as e:
+        error_text = str(e)
+
+        if "Out of host capacity" in error_text:
+            return {
+                "created": False,
+                "reason": "OUT_OF_CAPACITY"
+            }
+
+        if "TooManyRequests" in error_text:
+            return {
+                "created": False,
+                "reason": "RATE_LIMITED"
+            }
+
+        if "NameResolutionError" in error_text:
+            return {
+                "created": False,
+                "reason": "NETWORK_ERROR"
+            }
+
+        return {
+            "created": False,
+            "reason": "UNKNOWN_ERROR",
+            "error": error_text
         }

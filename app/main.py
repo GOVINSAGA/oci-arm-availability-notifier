@@ -1,9 +1,12 @@
 from fastapi import FastAPI
 
+
+
 from app.checker import (
     test_oci_connection,
     check_arm_shapes,
-    check_arm_capacity
+    check_arm_capacity,
+    auto_create_arm_instance
 )
 
 app = FastAPI()
@@ -28,3 +31,7 @@ def check_arm():
 @app.get("/capacity-check")
 def capacity_check():
     return check_arm_capacity()
+
+@app.get("/auto-create")
+def auto_create():
+    return auto_create_arm_instance()
