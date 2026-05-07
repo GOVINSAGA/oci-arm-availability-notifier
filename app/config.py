@@ -10,4 +10,7 @@ OCI_CONFIG = {
     "tenancy": os.getenv("OCI_TENANCY_OCID"),
     "region": os.getenv("OCI_REGION"),
     "compartment_id": os.getenv("OCI_COMPARTMENT_OCID"),
+    "subnet_id": os.getenv("OCI_SUBNET_OCID"),
+"availability_domain": os.getenv("OCI_AVAILABILITY_DOMAIN"),
+"image_id": os.getenv("OCI_IMAGE_OCID"),
 }
