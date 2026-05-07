@@ -9,4 +9,5 @@ OCI_CONFIG = {
     "fingerprint": os.getenv("OCI_FINGERPRINT"),
     "tenancy": os.getenv("OCI_TENANCY_OCID"),
     "region": os.getenv("OCI_REGION"),
+    "compartment_id": os.getenv("OCI_COMPARTMENT_OCID"),
 }

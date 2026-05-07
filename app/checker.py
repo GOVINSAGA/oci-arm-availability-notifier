@@ -19,3 +19,34 @@ def test_oci_connection():
             "success": False,
             "error": str(e)
         }
+
+
+def check_arm_shapes():
+    try:
+        compute_client = oci.core.ComputeClient(OCI_CONFIG)
+
+        shapes = compute_client.list_shapes(
+            compartment_id=OCI_CONFIG["compartment_id"]
+        )
+
+        arm_shapes = []
+
+        for shape in shapes.data:
+            if "A1.Flex" in shape.shape:
+                arm_shapes.append({
+                    "shape": shape.shape,
+                    "ocpus": shape.ocpus,
+                    "memory": shape.memory_in_gbs
+                })
+
+        return {
+            "success": True,
+            "arm_shapes_found": len(arm_shapes),
+            "shapes": arm_shapes
+        }
+
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e)
+        }
